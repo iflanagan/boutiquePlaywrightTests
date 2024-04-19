@@ -6,6 +6,17 @@ const config = require('./config');
 
 test('Validate Title Demo page', async ({ page }) => {
 
+    page.on('console', async msg => {
+        const screenshotPath = `step_${Date.now()}.png`;
+        try {
+          await page.screenshot({ path: screenshotPath });
+          console.log(`Screenshot saved as ${screenshotPath}`);
+        } catch (error) {
+          console.error('Error occurred while taking screenshot:', error);
+        }
+      });
+      
+
   // await page.goto('https://demo.testim.io/prod/'); 
   await page.goto(config.baseUrl);
  // await page.pause();
@@ -58,6 +69,13 @@ test('Login Test Demo Site', async ({ page }) => {
   await page.getByRole('link', { name: 'Log out' }).click();
   */
 
+
+  // Enable screenshots for every step
+  page.on('console', async msg => {
+    const screenshotPath = `step_${Date.now()}.png`;
+    await page.screenshot({ path: screenshotPath });
+    console.log(`Screenshot saved as ${screenshotPath}`);
+  });
 
       // @ts-ignore
       console.log('Click Login button');
