@@ -1,21 +1,35 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const config = require('./config');
+const PlaywrightHelper = require('./playwrightHelper');
 
 
+test('Select Travelers', async ({ page }) => {
+    // Navigate to the web app
+    await page.goto('https://demo.testim.io/prod/');
+  
+    // Select 2 adults
+    await page.locator('div').filter({ hasText: /^Adults \(18\+\)1234$/ }).getByRole('textbox').click();
+    await page.getByText('2', { exact: true }).first().click();
+  
+    // Select 4 children
+    await page.locator('div').filter({ hasText: /^Children \(0-7\)1234$/ }).getByRole('textbox').click();
+    await page.getByText('4', { exact: true }).nth(1).click();
+  
+    // Validate the selected travelers on the page
+    const selectedAdults = await page.locator('div').filter({ hasText: /^Adults \(18\+\): 2$/ }).first().innerText();
+    const selectedChildren = await page.locator('div').filter({ hasText: /^Children \(0-7\): 4$/ }).first().innerText();
+  
+    // Assert that the selected travelers match the expected values
+    expect(selectedAdults).toContain('Adults (18+): 2');
+    expect(selectedChildren).toContain('Children (0-7): 4');
+  });
+
+
+  
 
 test('Validate Title Demo page', async ({ page }) => {
 
-    page.on('console', async msg => {
-        const screenshotPath = `step_${Date.now()}.png`;
-        try {
-          await page.screenshot({ path: screenshotPath });
-          console.log(`Screenshot saved as ${screenshotPath}`);
-        } catch (error) {
-          console.error('Error occurred while taking screenshot:', error);
-        }
-      });
-      
 
   // await page.goto('https://demo.testim.io/prod/'); 
   await page.goto(config.baseUrl);
@@ -27,20 +41,29 @@ test('Validate Title Demo page', async ({ page }) => {
     
    // await page.pause();
 
-    // Validate the title
+   await expect(page).toHaveTitle(config.expectedPageTitle);
+
+  /*
     if (pageTitle === config.expectedPageTitle) {
         console.log('Title validation passed.');
     } else {
         console.error(`Title validation failed. Expected: ${config.expectedPageTitle} Actual: ${pageTitle}`);
     }
+    */
   
 });
+
+
+test('Select Destination', async ({ page }) => {
+    await page.goto(config.baseUrl);
+    await page.getByRole('button', { name: 'Select Destination' }).click();
+  });
 
 
 
 test('Login Test Demo Site', async ({ page }) => {
 
-  await page.goto('https://demo.testim.io/prod/');
+  await page.goto(config.baseUrl);
 
 
         // Find the element using JavaScript path and querySelector
@@ -70,29 +93,21 @@ test('Login Test Demo Site', async ({ page }) => {
   */
 
 
-  // Enable screenshots for every step
-  page.on('console', async msg => {
-    const screenshotPath = `step_${Date.now()}.png`;
-    await page.screenshot({ path: screenshotPath });
-    console.log(`Screenshot saved as ${screenshotPath}`);
-  });
-
       // @ts-ignore
       console.log('Click Login button');
       await loginButtonHandle.click();
-      await page.waitForTimeout(config.timeout);
 
       console.log('Enter username: ' +config.username);
       // Fill in login credentials and submit the form
       await page.type('#login > div:nth-child(1) > input', config.username, { delay: 100 }); // Adds a delay of 100 milliseconds between key presses
-      await page.waitForTimeout(config.timeout);
+     // await page.waitForTimeout(config.timeout);
 
       // @ts-ignore
       //await passwordInput.click();
       console.log('Enter password: ' +config.password);
       await page.keyboard.press('Tab');
       await page.fill('#login > div:nth-child(2) > input', config.password);
-      await page.waitForTimeout(config.timeout);
+     // await page.waitForTimeout(config.timeout);
 
       console.log('Click Login button');
       await page.click('button[type="submit"]');
@@ -110,9 +125,9 @@ test('Login Test Demo Site', async ({ page }) => {
         }
 
         console.log('Logout now');
-        await page.waitForTimeout(config.timeout);
+      //  await page.waitForTimeout(config.timeout);
         await page.click('#app > div > header > div > div:nth-child(2) > ul > div > button > span:nth-child(1)');
-        await page.waitForTimeout(config.timeout);
+      //  await page.waitForTimeout(config.timeout);
         await page.click('#app > div > header > div > div:nth-child(2) > ul > div > ul > li > a');
         
 
