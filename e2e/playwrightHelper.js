@@ -31,6 +31,18 @@ class PlaywrightHelper {
     return await this.page.textContent(selector);
   }
 
+  async login(username, password, signedInUser) {
+
+  await page.getByRole('button', { name: 'Log in' }).click();
+  await page.locator('#login input[type="text"]').click();
+  await page.locator('#login input[type="text"]').fill(username);
+  await page.locator('input[type="password"]').click();
+  await page.locator('input[type="password"]').fill(password);
+  await page.getByRole('navigation').getByRole('button', { name: 'Log in' }).click();
+  await page.getByRole('button', { name: 'Hello, John' }).click();
+  await page.getByRole('link', { name: 'Log out' }).click();
+  }
+
   async screenshot(path) {
     await this.page.screenshot({ path });
   }

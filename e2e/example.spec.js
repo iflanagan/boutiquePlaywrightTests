@@ -4,6 +4,12 @@ const config = require('./config');
 const PlaywrightHelper = require('./playwrightHelper');
 
 
+test('Visual Test', async ({ page }) => {
+    await page.goto(config.baseUrl);
+    await expect(page).toHaveScreenshot({ maxDiffPixels: 100 });
+  });
+
+
 test('Select Travelers', async ({ page }) => {
     // Navigate to the web app
     await page.goto('https://demo.testim.io/prod/');
@@ -59,6 +65,7 @@ test('Select Destination', async ({ page }) => {
     await page.getByRole('button', { name: 'Select Destination' }).click();
   });
 
+  
 
 
 test('Login Test Demo Site', async ({ page }) => {
