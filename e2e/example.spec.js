@@ -4,139 +4,117 @@ const config = require('./config');
 const PlaywrightHelper = require('./playwrightHelper');
 
 
-test('Visual Test', async ({ page }) => {
-    await page.goto(config.baseUrl);
-    await expect(page).toHaveScreenshot({ maxDiffPixels: 100 });
-  });
+const testData = {
+  email: 'ian@sealights.com',
+  address: '123 Main Street',
+  city: 'Austin',
+  state: 'TX',
+  zip: '78757',
+  cvv: '123',
+  baseURL: 'https://ian-btq.btq.sealights.co/'
+};
 
+async function fillCheckoutForm(page, data) {
+  await page.getByLabel('E-mail Address').fill(data.email);
+  await page.getByLabel('Street Address').fill(data.address);
+  await page.getByLabel('Zip Code').fill(data.zip);
+  await page.getByLabel('City').fill(data.city);
+  await page.getByLabel('State').fill(data.state);
+  await page.getByLabel('CVV').fill(data.cvv);
+}
 
-test('Select Travelers', async ({ page }) => {
-    // Navigate to the web app
-    await page.goto('https://demo.testim.io/prod/');
-  
-    // Select 2 adults
-    await page.locator('div').filter({ hasText: /^Adults \(18\+\)1234$/ }).getByRole('textbox').click();
-    await page.getByText('2', { exact: true }).first().click();
-  
-    // Select 4 children
-    await page.locator('div').filter({ hasText: /^Children \(0-7\)1234$/ }).getByRole('textbox').click();
-    await page.getByText('4', { exact: true }).nth(1).click();
-  
-    // Validate the selected travelers on the page
-    const selectedAdults = await page.locator('div').filter({ hasText: /^Adults \(18\+\): 2$/ }).first().innerText();
-    const selectedChildren = await page.locator('div').filter({ hasText: /^Children \(0-7\): 4$/ }).first().innerText();
-  
-    // Assert that the selected travelers match the expected values
-    expect(selectedAdults).toContain('Adults (18+): 2');
-    expect(selectedChildren).toContain('Children (0-7): 4');
-  });
+test('Add single item to cart and complete checkout', async ({ page }) => {
+  await page.goto(testData.baseURL);
 
+  // Click first product
+  await page.locator('.col-md-4 > a').first().click();
+  await page.getByRole('button', { name: 'Add To Cart' }).click();
 
-  
+  // Fill and place order
+  await fillCheckoutForm(page, testData);
+  await page.getByRole('button', { name: 'Place Order' }).click();
 
-test('Validate Title Demo page', async ({ page }) => {
+  // Assertions
+  await expect(page.getByText('Your order is complete!')).toBeVisible();
+  await expect(page.getByText(/[\d]+\.\d{2}/)).toBeVisible(); // Validate total format
+});
 
+test('Add multiple items to cart and verify before checkout', async ({ page }) => {
+  await page.goto(testData.baseURL);
 
-  // await page.goto('https://demo.testim.io/prod/'); 
-  await page.goto(config.baseUrl);
- // await page.pause();
+  const products = page.locator('.col-md-4 > a');
 
-    // Get the title of the page
-    const pageTitle = await page.title();
-    console.log(` current title is: ${pageTitle}`);
-    
-   // await page.pause();
+  // Add first two products
+  for (let i = 0; i < 2; i++) {
+    await products.nth(i).click();
+    await page.getByRole('button', { name: 'Add To Cart' }).click();
+    await page.goto(testData.baseURL);
+  }
 
-   await expect(page).toHaveTitle(config.expectedPageTitle);
+  // Go to cart page
+  await page.goto(`${testData.baseURL}cart/checkout`);
 
-  /*
-    if (pageTitle === config.expectedPageTitle) {
-        console.log('Title validation passed.');
-    } else {
-        console.error(`Title validation failed. Expected: ${config.expectedPageTitle} Actual: ${pageTitle}`);
-    }
-    */
-  
+  // Expect 2 product cards in checkout summary
+  const itemsInCart = page.locator('.checkout .cart-item');
+  await expect(itemsInCart).toHaveCount(2);
+
+  // Complete checkout
+  await fillCheckoutForm(page, testData);
+  await page.getByRole('button', { name: 'Place Order' }).click();
+
+  await expect(page.getByText('Your order is complete!')).toBeVisible();
+});
+
+test('Add item then remove it from cart and validate empty', async ({ page }) => {
+  await page.goto(testData.baseURL);
+
+  // Add one product
+  await page.locator('.col-md-4 > a').first().click();
+  await page.getByRole('button', { name: 'Add To Cart' }).click();
+
+  // Go to cart
+  await page.goto(`${testData.baseURL}cart/checkout`);
+
+  // Click remove button (assuming there's one per cart item)
+  const removeButton = page.locator('button', { hasText: 'Remove' }).first();
+  if (await removeButton.isVisible()) {
+    await removeButton.click();
+  }
+
+  // Verify cart is now empty
+  await expect(page.getByText(/Your cart is empty/i)).toBeVisible();
 });
 
 
-test('Select Destination', async ({ page }) => {
-    await page.goto(config.baseUrl);
-    await page.getByRole('button', { name: 'Select Destination' }).click();
-  });
+test('Add all items to cart and validate total', async ({ page }) => {
+  await page.goto('https://ian-btq.btq.sealights.co/');
 
-  
+  // Locate all product items and click 'Add to cart' for each
+  const productItems = await page.locator('text=$').elementHandles(); 
+  // Alternative: use specific selectors if you add buttons with recognisable text or CSS selectors
 
+  let expectedTotal = 0;
 
-test('Login Test Demo Site', async ({ page }) => {
+  for (const item of productItems) {
+    const priceText = await item.textContent();
+    const match = priceText && priceText.match(/\$(\d+\.\d{2})/);
+    if (match) {
+      expectedTotal += parseFloat(match[1]);
+      await item.click(); // click on the item to add to cart
+    }
+  }
 
-  await page.goto(config.baseUrl);
+  // Open cart — adjust selector if there is a dedicated cart button/link
+  await page.click('text=Cart');
 
+  // Grab actual total from cart summary
+  const totalLocator = page.locator('text=Total').first();
+  const totalText = await totalLocator.textContent();
+  const totalMatch = totalText && totalText.match(/\$(\d+\.\d{2})/);
+  const actualTotal = totalMatch ? parseFloat(totalMatch[1]) : null;
 
-        // Find the element using JavaScript path and querySelector
-        const loginButtonHandle = await page.evaluateHandle(() => {
-          return document.querySelector('#app > div > header > div > div:nth-child(2) > ul > li > button');
-      });
-
-      const userInput = await page.evaluateHandle (() => {
-        return document.querySelector('#login > div:nth-child(1) > input');
-    });
-
-    const passwordInput = await page.evaluateHandle (() => {
-      return document.querySelector('#login > div:nth-child(2) > input');
-  });
-
-
-
-  /*
-  await page.getByRole('button', { name: 'Log in' }).click();
-  await page.locator('#login input[type="text"]').click();
-  await page.locator('#login input[type="text"]').fill('ian@testim.io');
-  await page.locator('input[type="password"]').click();
-  await page.locator('input[type="password"]').fill('isdgoISAGHSOI');
-  await page.getByRole('navigation').getByRole('button', { name: 'Log in' }).click();
-  await page.getByRole('button', { name: 'Hello, John' }).click();
-  await page.getByRole('link', { name: 'Log out' }).click();
-  */
-
-
-      // @ts-ignore
-      console.log('Click Login button');
-      await loginButtonHandle.click();
-
-      console.log('Enter username: ' +config.username);
-      // Fill in login credentials and submit the form
-      await page.type('#login > div:nth-child(1) > input', config.username, { delay: 100 }); // Adds a delay of 100 milliseconds between key presses
-     // await page.waitForTimeout(config.timeout);
-
-      // @ts-ignore
-      //await passwordInput.click();
-      console.log('Enter password: ' +config.password);
-      await page.keyboard.press('Tab');
-      await page.fill('#login > div:nth-child(2) > input', config.password);
-     // await page.waitForTimeout(config.timeout);
-
-      console.log('Click Login button');
-      await page.click('button[type="submit"]');
-        // Validate if login was successful
-        const loggedInUser = await page.textContent('#app > div > header > div > div:nth-child(2) > ul > div > button > span:nth-child(1)');
-        // @ts-ignore
-
-        await page.waitForTimeout(config.timeout);
-        console.log('Perform Validation!');
-        // @ts-ignore
-        if (loggedInUser.trim() === config.loggedInUser) {
-            console.log('Login successful. Logged in as:', loggedInUser);
-        } else {
-            console.error('Login failed. Unexpected logged in user:', loggedInUser);
-        }
-
-        console.log('Logout now');
-      //  await page.waitForTimeout(config.timeout);
-        await page.click('#app > div > header > div > div:nth-child(2) > ul > div > button > span:nth-child(1)');
-      //  await page.waitForTimeout(config.timeout);
-        await page.click('#app > div > header > div > div:nth-child(2) > ul > div > ul > li > a');
-        
-
+  // Assert totals match
+  expect(actualTotal).not.toBeNull();
+  expect(actualTotal).toBeCloseTo(expectedTotal, 2);
 });
 
