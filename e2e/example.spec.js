@@ -40,6 +40,31 @@ test('Add single item to cart and complete checkout', async ({ page }) => {
 });
 
 
+test('Add Watch to Cart and validate', async ({ page }) => {
+
+  await page.goto(testData.baseURL);
+  await page.locator('div:nth-child(4) > a').click();
+  await page.getByRole('button', { name: 'Add To Cart' }).click();
+  await page.getByText('Quantity:').click();
+  await page.getByText('$109.99').click();
+  await page.getByText('$8.99').click();
+  await page.getByText('$118.98').click();
+  await page.getByRole('button', { name: 'Empty Cart' }).click();
+});
+
+
+test('Add Salt and Pepper Shakers to cart and validate', async ({ page }) => {
+  await page.goto(testData.baseURL);
+  await page.locator('div:nth-child(8) > a').click();
+  await page.locator('#quantity').selectOption('2');
+  await page.getByRole('button', { name: 'Add To Cart' }).click();
+  await page.getByText('Quantity:').click();
+  await page.getByText('$36.98').click();
+  await page.getByText('$8.99').click();
+  await page.getByText('$45.97').click();
+  await page.getByRole('button', { name: 'Empty Cart' }).click();
+});
+
 /*
 test('Add all items to cart and validate total', async ({ page }) => {
   await page.goto('https://ian-btq.btq.sealights.co/');
