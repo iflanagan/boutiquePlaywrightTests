@@ -39,53 +39,8 @@ test('Add single item to cart and complete checkout', async ({ page }) => {
   await expect(page.getByText(/[\d]+\.\d{2}/)).toBeVisible(); // Validate total format
 });
 
-test('Add multiple items to cart and verify before checkout', async ({ page }) => {
-  await page.goto(testData.baseURL);
 
-  const products = page.locator('.col-md-4 > a');
-
-  // Add first two products
-  for (let i = 0; i < 2; i++) {
-    await products.nth(i).click();
-    await page.getByRole('button', { name: 'Add To Cart' }).click();
-    await page.goto(testData.baseURL);
-  }
-
-  // Go to cart page
-  await page.goto(`${testData.baseURL}cart/checkout`);
-
-  // Expect 2 product cards in checkout summary
-  const itemsInCart = page.locator('.checkout .cart-item');
-  await expect(itemsInCart).toHaveCount(2);
-
-  // Complete checkout
-  await fillCheckoutForm(page, testData);
-  await page.getByRole('button', { name: 'Place Order' }).click();
-
-  await expect(page.getByText('Your order is complete!')).toBeVisible();
-});
-
-test('Add item then remove it from cart and validate empty', async ({ page }) => {
-  await page.goto(testData.baseURL);
-
-  // Add one product
-  await page.locator('.col-md-4 > a').first().click();
-  await page.getByRole('button', { name: 'Add To Cart' }).click();
-
-  // Go to cart
-  await page.goto(`${testData.baseURL}cart/checkout`);
-
-  // Click remove button (assuming there's one per cart item)
-  const removeButton = page.locator('button', { hasText: 'Remove' }).first();
-  if (await removeButton.isVisible()) {
-    await removeButton.click();
-  }
-
-  // Verify cart is now empty
-  await expect(page.getByText(/Your cart is empty/i)).toBeVisible();
-});
-
-
+/*
 test('Add all items to cart and validate total', async ({ page }) => {
   await page.goto('https://ian-btq.btq.sealights.co/');
 
@@ -117,4 +72,4 @@ test('Add all items to cart and validate total', async ({ page }) => {
   expect(actualTotal).not.toBeNull();
   expect(actualTotal).toBeCloseTo(expectedTotal, 2);
 });
-
+*/

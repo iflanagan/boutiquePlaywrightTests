@@ -17,3 +17,7 @@ jobs:
 
       - name: Run Playwright tests
         run: npx playwright test
+<<<<<<< HEAD
+=======
+
+>>>>>>> fe788e3 (fixed gh actions workflow file)
