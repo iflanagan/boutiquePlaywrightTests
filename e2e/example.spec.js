@@ -65,6 +65,19 @@ test('Add Salt and Pepper Shakers to cart and validate', async ({ page }) => {
   await page.getByRole('button', { name: 'Empty Cart' }).click();
 });
 
+
+
+test('Add Loafers to Cart and Validate', async ({ page }) => {
+  await page.goto(testData.baseURL);
+  await page.locator('div:nth-child(5) > a').click();
+  await page.getByRole('button', { name: 'Add To Cart' }).click();
+  await page.getByRole('heading', { name: 'Loafers' }).click();
+  await page.getByText('$89.99').click();
+  await page.getByText('$8.99').click();
+  await page.getByText('$98.98').click();
+  await page.getByRole('button', { name: 'Empty Cart' }).click();
+});
+
 /*
 test('Add all items to cart and validate total', async ({ page }) => {
   await page.goto('https://ian-btq.btq.sealights.co/');
