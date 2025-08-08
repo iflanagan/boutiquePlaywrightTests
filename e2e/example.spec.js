@@ -78,6 +78,21 @@ test('Add Loafers to Cart and Validate', async ({ page }) => {
   await page.getByRole('button', { name: 'Empty Cart' }).click();
 });
 
+
+test('Add Mug to cart and validate', async ({ page }) => {
+  
+  await page.goto(testData.baseURL);
+  await page.locator('div:nth-child(10) > a').click();
+  await page.getByRole('button', { name: 'Add To Cart' }).click();
+  await page.getByRole('heading', { name: 'Mug' }).click();
+  await page.getByText('Quantity:').click();
+  await page.getByRole('strong').click();
+  await page.locator('div').filter({ hasText: /^\$8\.99$/ }).click();
+  await page.getByText('SKU #6E92ZMYYFZ').click();
+  await page.getByText('$17.98').click();
+  await page.getByRole('button', { name: 'Empty Cart' }).click();
+});
+
 /*
 test('Add all items to cart and validate total', async ({ page }) => {
   await page.goto('https://ian-btq.btq.sealights.co/');
